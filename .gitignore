@@ -1,0 +1,16 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+# We include events.db because it is pre-seeded with 450 items, but you can ignore if desired.
+# events.db
+
+# IDEs and System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.gemini/
+*.log

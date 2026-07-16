@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="2026년 대한민국 전역의 백화점 문화센터, 지자체 행사, 문화 관련 기사를 실시간으로 크롤링하고 수집하는 지능형 문화 큐레이션 에이전트 서비스">
+    <title>문화공연 사냥꾼 2026</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- Header Panel -->
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">MH</div>
+            <h1 class="logo-text">문화공연 사냥꾼</h1>
+            <span class="logo-year">2026</span>
+        </div>
+        <div class="system-time" id="clock-widget">
+            <div class="time-pulse"></div>
+            <span id="current-time-text">2026년 07월 16일 목요일 14:55</span>
+        </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <main>
+        
+        <!-- Left Filter Panel -->
+        <aside class="sidebar">
+            
+            <!-- 1. Interactive Korea Map -->
+            <section class="glass-panel">
+                <h2 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 4L9 7"/></svg>
+                    지역 선택 (대한민국 지도)
+                </h2>
+                <div class="map-container">
+                    <!-- Geographically Accurate Curve-styled South Korea SVG Map -->
+                    <svg id="korea-map" viewBox="0 0 240 340">
+                        <g id="regions-group">
+                            <!-- Gangwon -->
+                            <path d="M125,39 C135,39 155,25 165,20 C175,30 182,50 195,68 C202,78 205,93 210,108 L195,113 C190,109 185,110 181,113 L165,113 L158,103 L152,104 L143,93 L140,98 L125,71 L125,39 Z" data-region="강원" id="region-gangwon" title="강원"></path>
+                            <!-- Gyeonggi -->
+                            <path d="M84,38 C93,34 103,35 110,39 L121,39 C124,45 121,52 125,57 L125,71 C120,75 122,81 124,85 L117,100 C115,99 113,101 111,101 C109,103 107,106 107,110 C108,113 110,115 112,118 L111,124 L94,122 C92,116 84,115 84,118 L76,116 L76,112 C79,110 81,107 82,104 L87,102 C88,100 87,95 85,94 C84,91 82,90 80,90 C77,90 75,86 77,83 L80,82 C81,79 77,73 79,70 L77,63 L84,63 L84,38 Z" data-region="경기" id="region-gyeonggi" title="경기"></path>
+                            <!-- Seoul (Inside Gyeonggi) -->
+                            <path d="M93,98 C95,94 99,93 103,96 C106,94 110,95 108,99 C111,102 109,105 107,106 C105,109 101,108 98,110 C95,109 93,106 94,103 C90,102 91,99 93,98 Z" data-region="서울" id="region-seoul" title="서울"></path>
+                            <!-- Incheon (West of Seoul) -->
+                            <path d="M74,93 C77,91 82,94 83,97 L86,98 L86,102 L83,104 L79,101 C77,102 75,99 74,99 C72,100 71,96 73,94 Z" data-region="인천" id="region-incheon" title="인천"></path>
+                            <!-- Chungbuk -->
+                            <path d="M125,138 C130,133 143,123 152,116 L165,113 L181,113 L180,124 L192,136 L175,156 L155,176 L142,166 L144,150 Z" data-region="충북" id="region-chungbuk" title="충북"></path>
+                            <!-- Chungnam -->
+                            <path d="M76,116 C74,122 64,122 55,121 C48,120 43,126 45,132 L54,134 C55,140 51,146 57,150 L54,164 C48,166 50,173 52,178 L75,186 L90,183 C92,178 91,171 95,169 L92,150 L95,143 L85,145 L84,118 Z" data-region="충남" id="region-chungnam" title="충남"></path>
+                            <!-- Sejong (Near Daejeon) -->
+                            <path d="M98,152 C103,151 106,154 105,159 C104,163 99,162 97,159 C96,155 97,152 98,152 Z" data-region="세종" id="region-sejong" title="세종"></path>
+                            <!-- Daejeon (East of Chungnam) -->
+                            <path d="M102,172 C108,170 112,174 110,180 C108,186 102,184 100,179 C99,175 101,172 102,172 Z" data-region="대전" id="region-daejeon" title="대전"></path>
+                            <!-- Gyeongbuk -->
+                            <path d="M195,113 L210,108 C214,128 220,148 225,168 C222,173 224,183 220,188 C223,193 218,203 215,213 L200,213 L192,198 L188,196 C185,198 180,193 178,196 L168,186 L155,176 L175,156 L192,136 Z" data-region="경북" id="region-gyeongbuk" title="경북"></path>
+                            <!-- Daegu (Inside Gyeongbuk) -->
+                            <path d="M182,183 C188,181 194,184 195,190 C196,196 190,200 184,199 C180,197 180,189 182,183 Z" data-region="대구" id="region-daegu" title="대구"></path>
+                            <!-- Gyeongnam -->
+                            <path d="M140,223 C146,218 152,216 160,223 L200,213 L215,213 C214,222 218,228 214,222 L208,236 L208,250 C196,250 195,245 198,240 L185,253 L165,258 L145,248 L135,238 Z" data-region="경남" id="region-gyeongnam" title="경남"></path>
+                            <!-- Busan (East of Gyeongnam) -->
+                            <path d="M198,240 C204,239 209,243 208,250 C207,256 200,255 196,250 C195,245 196,242 198,240 Z" data-region="부산" id="region-busan" title="부산"></path>
+                            <!-- Ulsan (North of Busan) -->
+                            <path d="M215,213 C222,211 226,216 225,223 C224,229 218,228 214,222 C212,218 213,215 215,213 Z" data-region="울산" id="region-ulsan" title="울산"></path>
+                            <!-- Jeonbuk -->
+                            <path d="M90,183 L120,183 L142,166 L155,176 L160,223 C152,216 146,218 140,223 L125,213 L108,210 L90,203 Z" data-region="전북" id="region-jeonbuk" title="전북"></path>
+                            <!-- Jeonnam -->
+                            <path d="M90,203 L108,210 L125,213 L135,238 L145,248 L135,258 L120,273 L95,278 L75,273 L60,263 L55,243 L70,223 Z" data-region="전남" id="region-전남" title="전남"></path>
+                            <!-- Gwangju (Inside Jeonnam) -->
+                            <path d="M85,240 C91,238 96,242 95,248 C94,254 88,253 84,248 C83,243 84,240 85,240 Z" data-region="광주" id="region-gwangju" title="광주"></path>
+                            <!-- Jeju (Island) -->
+                            <path d="M100,318 C115,315 135,315 145,320 C150,323 145,329 135,332 C120,334 105,333 95,328 C90,325 92,320 100,318 Z" data-region="제주" id="region-jeju" title="제주"></path>
+                        </g>
+                    </svg>
+                </div>
+            </section>
+
+            <!-- 2. Date / Month Filter -->
+            <section class="glass-panel">
+                <h2 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    2026년 월별 일정 필터
+                </h2>
+                <div class="month-grid" id="month-filters">
+                    <button class="month-btn active" data-month="전체">전체</button>
+                    <button class="month-btn" data-month="01">1월</button>
+                    <button class="month-btn" data-month="02">2월</button>
+                    <button class="month-btn" data-month="03">3월</button>
+                    <button class="month-btn" data-month="04">4월</button>
+                    <button class="month-btn" data-month="05">5월</button>
+                    <button class="month-btn" data-month="06">6월</button>
+                    <button class="month-btn" data-month="07">7월</button>
+                    <button class="month-btn" data-month="08">8월</button>
+                    <button class="month-btn" data-month="09">9월</button>
+                    <button class="month-btn" data-month="10">10월</button>
+                    <button class="month-btn" data-month="11">11월</button>
+                    <button class="month-btn" data-month="12">12월</button>
+                </div>
+            </section>
+
+            <!-- 3. Source Category Filter -->
+            <section class="glass-panel">
+                <h2 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    출처 분류 필터
+                </h2>
+                <div class="filter-group" id="category-filters">
+                    <button class="chip-btn active" data-category="전체">전체</button>
+                    <button class="chip-btn" data-category="지자체">지자체 홈페이지</button>
+                    <button class="chip-btn" data-category="축제">축제/페스티벌</button>
+                    <button class="chip-btn" data-category="뉴스">뉴스/기사문</button>
+                </div>
+            </section>
+
+            <!-- 4. Event Type Filter -->
+            <section class="glass-panel">
+                <h2 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    행사 유형 구분
+                </h2>
+                <div class="filter-group" id="event-type-filters">
+                    <button class="chip-btn active" data-type="전체">전체</button>
+                    <button class="chip-btn" data-type="공연">공연</button>
+                    <button class="chip-btn" data-type="체험">체험</button>
+                    <button class="chip-btn" data-type="전시">전시</button>
+                    <button class="chip-btn" data-type="강좌">강좌</button>
+                    <button class="chip-btn" data-type="축제">축제</button>
+                    <button class="chip-btn" data-type="기타">기타</button>
+                </div>
+            </section>
+        </aside>
+
+        <!-- Right Main Panel with Tabs -->
+        <section class="content-area">
+            
+            <!-- Navigation Tabs -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" id="tab-btn-explore" data-target="explore-tab">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    문화 행사 탐색
+                </button>
+                <button class="tab-btn" id="tab-btn-chat" data-target="chat-tab">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    지능형 에이전트 챗봇
+                </button>
+                <button class="tab-btn" id="tab-btn-crawler" data-target="crawler-tab">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    실시간 크롤링 엔진
+                </button>
+            </nav>
+
+            <!-- Tab Content: 1. Explore -->
+            <div class="tab-content active" id="explore-tab">
+                <!-- Search Bar Container -->
+                <div style="margin-bottom: 1.5rem; display: flex; gap: 10px;">
+                    <div class="search-wrapper">
+                        <input type="text" class="search-input" id="search-input" placeholder="키워드, 행사명, 장소 등으로 세밀하게 찾아보세요...">
+                        <button class="search-btn" id="search-action-btn">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Cards Grid -->
+                <div class="events-grid" id="events-grid-container">
+                    <!-- Dynamic cards will be rendered here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Tab Content: 2. Intelligent AI Chatbot -->
+            <div class="tab-content" id="chat-tab">
+                <div class="chat-layout">
+                    <div class="chat-header">
+                        <div class="chat-avatar">AI</div>
+                        <div class="chat-info">
+                            <h3>문화공연 사냥꾼 지능형 비서</h3>
+                            <p>● ONLINE - 2026 문화 가이드 작동 중</p>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages-container">
+                        <div class="chat-msg agent">
+                            <div class="chat-avatar">AI</div>
+                            <div class="msg-bubble">
+                                안녕하세요! 저는 **문화공연 사냥꾼 지능형 비서**입니다. 🏹 <br><br>
+                                "경기 지역의 10월 축제 추천해줘", "백화점에서 하는 쿠킹 클래스 있니?", "여름방학 때 애들과 체험할 만한 곳이 어딜까?" 처럼 자연스럽게 물어보세요!<br>
+                                로컬 데이터베이스를 조회해 장소/날짜가 들어간 예쁜 추천 카드를 즉석에서 꺼내드릴게요!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick suggestion chips -->
+                    <div class="chat-suggest-chips">
+                        <button class="suggest-chip" data-query="이번 주말 서울의 유용한 강좌 추천해줘">서울 퇴근길 강좌 🎨</button>
+                        <button class="suggest-chip" data-query="2026년 10월 축제 다 보여줘">10월 축제들 모음 🌾</button>
+                        <button class="suggest-chip" data-query="제주도 여행 일정이나 트레킹 체험 있나요?">제주도 에코 여행 🌋</button>
+                        <button class="suggest-chip" data-query="인천 송도 근처의 가을 축제 정보를 알려줘">송도 가을 축제 🌾</button>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chat-input-box" placeholder="에이전트 비서에게 질문을 남겨보세요...">
+                        <button class="chat-send-btn" id="chat-send-action">전송</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: 3. Real-Time Crawler Terminal Console -->
+            <div class="tab-content" id="crawler-tab">
+                <div class="crawler-layout">
+                    <!-- Crawler Controls -->
+                    <div class="crawler-controls glass-panel">
+                        <h3 class="panel-title">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                            크롤러 파라미터
+                        </h3>
+                        
+                        <div>
+                            <div class="control-label">데이터 정보 소스</div>
+                            <select class="crawler-select" id="crawler-source-select">
+                                <option value="뉴스">구글 뉴스 실시간 RSS (실제 동작)</option>
+                                <option value="지자체">전국 지자체 게시판 (에이전트 시뮬레이션)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="control-label">크롤링 탐색 키워드</div>
+                            <input type="text" class="search-input" id="crawler-keyword-input" placeholder="예: '쿠킹클래스', '음악회', '벚꽃'" style="padding-right: 15px;">
+                        </div>
+
+                        <button class="run-crawl-btn" id="run-crawler-btn">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            수집 에이전트 가동
+                        </button>
+                    </div>
+
+                    <!-- Monospace Green Console Terminal Simulator -->
+                    <div class="terminal-panel">
+                        <div class="terminal-header">
+                            <div class="terminal-dots">
+                                <span class="term-dot red"></span>
+                                <span class="term-dot yellow"></span>
+                                <span class="term-dot green"></span>
+                            </div>
+                            <div class="terminal-title">CULTURE HUNTER CRAWLER CONSOLE</div>
+                            <div style="font-size: 10px; color: rgba(0, 255, 102, 0.45);">SYS_VER_2.0</div>
+                        </div>
+                        <div class="terminal-logs" id="terminal-logs-screen">
+                            <div class="terminal-line">[SYSTEM] 대시보드 크롤러 인터페이스 온라인.</div>
+                            <div class="terminal-line">[SYSTEM] 에이전트 구동 준비 완료. 파라미터를 입력하고 버튼을 누르세요.<span class="terminal-cursor"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Detailed Modal Window overlay -->
+    <div class="modal-overlay" id="detail-modal-overlay">
+        <div class="modal-card">
+            <div class="modal-img-banner">
+                <img src="/static/images/news.jpg" class="modal-img" id="modal-banner-image" alt="행사 이미지">
+                <button class="modal-close-btn" id="modal-close-action">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-badges">
+                    <span class="badge badge-center" id="modal-badge-category">문화센터</span>
+                    <span class="badge-type" id="modal-badge-type">강좌</span>
+                </div>
+                <h3 class="modal-title" id="modal-title-text">2026 현대백화점 가을학기 프리미엄 이탈리안 쿠킹 클래스</h3>
+                
+                <div class="modal-info-row">
+                    <span class="label">운영 주체</span>
+                    <span id="modal-info-source">현대백화점 문화센터</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="label">개최 지역</span>
+                    <span id="modal-info-region">서울</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="label">행사 일시</span>
+                    <span id="modal-info-dates">2026-09-01 ~ 2026-11-30</span>
+                </div>
+                <div class="modal-info-row">
+                    <span class="label">상세 장소</span>
+                    <span id="modal-info-location">현대백화점 압구정본점 6층 컬처룸</span>
+                </div>
+
+                <p class="modal-desc" id="modal-description-text">
+                    미슐랭 스타 레스토랑 출신 오너 셰프가 직접 전수하는 홈 파티 파스타 및 스테이크 레시피 과정입니다.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px;">
+                    <a href="#" target="_blank" class="modal-link-btn" id="modal-link-action" style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px;">공식 출처로 이동</a>
+                    <a href="#" target="_blank" class="modal-link-btn" id="modal-search-action" style="margin: 0; background: linear-gradient(135deg, #03c75a, #02b34f); box-shadow: 0 4px 15px rgba(3, 199, 90, 0.25); display: flex; align-items: center; justify-content: center; gap: 6px;">네이버에서 검색</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
