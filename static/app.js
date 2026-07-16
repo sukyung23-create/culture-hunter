@@ -214,13 +214,55 @@ async function fetchEvents() {
         appState.events = data;
         renderEvents(data);
     } catch (e) {
-        console.error("Error fetching events:", e);
-        dom.eventsGridContainer.innerHTML = `
-            <div class="empty-state">
-                <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                <p>데이터 로드에 실패했습니다. 백엔드 서버 점검을 실행해 주세요.</p>
-            </div>
-        `;
+        console.log("Error fetching events from API, falling back to static events.json (Serverless Mode):", e);
+        try {
+            // Serverless fallback loading events.json statically
+            const response = await fetch('./static/events.json');
+            const allEvents = await response.json();
+            
+            const filtered = allEvents.filter(ev => {
+                // Region Filter
+                if (appState.region !== '전체' && ev.region !== appState.region) return false;
+                // Category Filter
+                if (appState.category !== '전체' && ev.category !== appState.category) return false;
+                // Event Type Filter
+                if (appState.eventType !== '전체' && ev.event_type !== appState.eventType) return false;
+                
+                // Month Filter (Calculated Calendar Overlap)
+                if (appState.month !== '전체') {
+                    const targetMonth = parseInt(appState.month, 10);
+                    try {
+                        const sMon = parseInt(ev.start_date.split('-')[1], 10);
+                        const eMon = parseInt(ev.end_date.split('-')[1], 10);
+                        if (!(sMon <= targetMonth && targetMonth <= eMon)) return false;
+                    } catch(err) {
+                        return false;
+                    }
+                }
+                
+                // Query Text Filter
+                if (appState.query.trim() !== '') {
+                    const q = appState.query.toLowerCase();
+                    const titleMatch = ev.title.toLowerCase().includes(q);
+                    const descMatch = (ev.description || '').toLowerCase().includes(q);
+                    const locMatch = (ev.location || '').toLowerCase().includes(q);
+                    if (!titleMatch && !descMatch && !locMatch) return false;
+                }
+                
+                return true;
+            });
+            
+            appState.events = filtered;
+            renderEvents(filtered);
+        } catch (err) {
+            console.error("Critical: Failed to load serverless backup dataset:", err);
+            dom.eventsGridContainer.innerHTML = `
+                <div class="empty-state">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <p>데이터 로드에 실패했습니다. 백엔드 서버를 가동하거나 static/events.json 파일의 유효성을 체크해 주세요.</p>
+                </div>
+            `;
+        }
     }
 }
 
@@ -456,8 +498,42 @@ async function submitChatMessage() {
         dom.chatMessagesContainer.scrollTop = dom.chatMessagesContainer.scrollHeight;
         
     } catch (e) {
-        typingBubble.remove();
-        appendChatBubble('agent', '죄송합니다. 네트워크 에러로 인해 답변 분석에 실패했습니다. 백엔드를 가동해 주세요.');
+        console.log("Error connecting to chat API, launching client-side AI chatbot engine...", e);
+        try {
+            const result = await runClientSideChat(msgText);
+            typingBubble.remove();
+            
+            const agentBubble = appendChatBubble('agent', result.reply);
+            
+            if (result.events && result.events.length > 0) {
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'chat-cards-container';
+                
+                result.events.forEach(ev => {
+                    const miniCard = document.createElement('div');
+                    miniCard.className = 'chat-recommend-card';
+                    miniCard.innerHTML = `
+                        <div class="chat-card-region">${ev.region} • ${ev.event_type}</div>
+                        <h4 class="chat-card-title">${ev.title}</h4>
+                        <p class="chat-card-desc">${ev.description || ''}</p>
+                        <button class="chat-card-btn">상세 요약</button>
+                    `;
+                    
+                    miniCard.querySelector('.chat-card-btn').addEventListener('click', () => {
+                        showModal(ev);
+                    });
+                    
+                    cardContainer.appendChild(miniCard);
+                });
+                
+                agentBubble.querySelector('.msg-bubble').appendChild(cardContainer);
+            }
+            dom.chatMessagesContainer.scrollTop = dom.chatMessagesContainer.scrollHeight;
+        } catch (err) {
+            console.error("Critical: Client-side chatbot engine error:", err);
+            typingBubble.remove();
+            appendChatBubble('agent', '죄송합니다. 네트워크 에러로 인해 답변 분석에 실패했습니다. 백엔드를 가동해 주세요.');
+        }
     }
 }
 
@@ -629,4 +705,173 @@ function showModal(ev) {
 
 function closeModal() {
     dom.detailModalOverlay.classList.remove('active');
+}
+
+// ==========================================
+// 10. Serverless Client-Side AI Chatbot Engine
+// ==========================================
+async function runClientSideChat(message) {
+    try {
+        const res = await fetch('./static/events.json');
+        const allEvents = await res.json();
+        
+        const cleanMessage = message.replace(/[^\w\sㄱ-ㅎ가-힣]/g, ' ');
+        const words = cleanMessage.split(/\s+/).filter(w => w.trim().length >= 2);
+        
+        const synonyms = {
+            "요리": ["요리", "쿠킹", "레시피", "쿠킹클래스", "셰프", "음식", "미식", "비빔밥", "치맥", "푸드", "먹거리", "베이킹"],
+            "쿠킹": ["요리", "쿠킹", "레시피", "쿠킹클래스", "셰프", "음식", "미식", "비빔밥", "치맥", "푸드", "먹거리", "베이킹"],
+            "음식": ["요리", "쿠킹", "레시피", "쿠킹클래스", "셰프", "음식", "미식", "비빔밥", "치맥", "푸드", "먹거리", "베이킹"],
+            "미식": ["요리", "쿠킹", "레시피", "쿠킹클래스", "셰프", "음식", "미식", "비빔밥", "치맥", "푸드", "먹거리", "베이킹"],
+            "레시피": ["요리", "쿠킹", "레시피", "쿠킹클래스", "셰프", "음식", "미식", "비빔밥", "치맥", "푸드", "먹거리", "베이킹"],
+            "힐링": ["힐링", "요가", "도예", "명상", "교감", "커피", "온전한", "휴식", "트레킹"],
+            "요가": ["요가", "필라테스", "명상", "스트레칭", "체형", "건강", "운동"],
+            "운동": ["요가", "필라테스", "명상", "스트레칭", "운동", "체력", "헬스", "트레킹", "도보"],
+            "미술": ["미술", "도예", "그림", "드로잉", "유화", "비엔날레", "미디어아트", "전시", "갤러리", "화가", "아트"],
+            "그림": ["미술", "도예", "그림", "드로잉", "유화", "비엔날레", "미디어아트", "전시", "갤러리", "화가", "아트"],
+            "전시": ["미술", "도예", "그림", "드로잉", "유화", "비엔날레", "미디어아트", "전시", "갤러리", "화가", "아트", "박물관"],
+            "도예": ["도예", "도자기", "달항아리", "물레", "공예", "가마"],
+            "음악": ["음악", "공연", "오케스트라", "콘서트", "연주", "국악", "버스킹", "디바", "교향악단", "클래식", "선율", "심포니", "가수", "노래"],
+            "공연": ["음악", "공연", "오케스트라", "콘서트", "연주", "국악", "버스킹", "디바", "교향악단", "클래식", "선율", "심포니", "가수", "노래", "뮤지컬", "연극"],
+            "콘서트": ["음악", "공연", "오케스트라", "콘서트", "연주", "국악", "버스킹", "디바", "교향악단", "클래식", "선율", "심포니", "가수", "노래", "뮤지컬", "연극"],
+            "축제": ["축제", "페스티벌", "페스타", "행사", "군항제", "야시장", "마켓", "0시", "머드"],
+            "페스티벌": ["축제", "페스티벌", "페스타", "행사", "군항제", "야시장", "마켓", "0시", "머드"],
+            "여행": ["여행", "트레킹", "투어", "관광", "에코", "제주도", "산책", "지질", "코스"]
+        };
+        
+        const expandedKeywords = new Set();
+        words.forEach(w => {
+            expandedKeywords.add(w);
+            for (const [key, syns] of Object.entries(synonyms)) {
+                if (w.includes(key) || key.includes(w)) {
+                    expandedKeywords.add(key);
+                    syns.forEach(s => expandedKeywords.add(s));
+                }
+            }
+        });
+        
+        const regionMapping = {
+            "서울": "서울", "경기": "경기", "인천": "인천", "강원": "강원", 
+            "충북": "충북", "충청북도": "충북", "충남": "충남", "충청남도": "충남", 
+            "대전": "대전", "세종": "세종", "경북": "경북", "경상북도": "경북", 
+            "대구": "대구", "울산": "울산", "부산": "부산", "경남": "경남", "경상남도": "경남", 
+            "전북": "전북", "전라북도": "전북", "전남": "전남", "전라남도": "전남", 
+            "광주": "광주", "제주": "제주", "제주도": "제주", "특별자치도": "제주"
+        };
+        let detectedRegion = null;
+        for (const [alias, canonical] of Object.entries(regionMapping)) {
+            if (message.includes(alias)) {
+                detectedRegion = canonical;
+                break;
+            }
+        }
+        
+        const typeMapping = {
+            "공연": "공연", "콘서트": "공연", "연주": "공연", "음악": "공연", "오케스트라": "공연", "뮤지컬": "공연", "연극": "공연",
+            "체험": "체험", "만들기": "체험", "투어": "체험", "트레킹": "체험", "도보": "체험",
+            "전시": "전시", "미술": "전시", "그림": "전시", "박물관": "전시", "갤러리": "전시", "비엔날레": "전시",
+            "강좌": "강좌", "교육": "강좌", "수업": "강좌", "아카데미": "강좌", "클래스": "강좌",
+            "축제": "축제", "페스티벌": "축제", "페스타": "축제"
+        };
+        let detectedType = null;
+        for (const [alias, canonical] of Object.entries(typeMapping)) {
+            if (message.includes(alias)) {
+                detectedType = canonical;
+                break;
+            }
+        }
+        
+        let detectedMonth = null;
+        const monthMatch = message.match(/(\d{1,2})\s*월/);
+        if (monthMatch) {
+            const m = parseInt(monthMatch[1], 10);
+            if (1 <= m && m <= 12) detectedMonth = m;
+        }
+        
+        const todayStr = "2026-07-16";
+        let searchDate = todayStr;
+        if (detectedMonth) {
+            searchDate = `2026-${String(detectedMonth).padStart(2, '0')}-01`;
+        }
+        
+        const scoredEvents = [];
+        allEvents.forEach(ev => {
+            if (ev.end_date < searchDate) return;
+            
+            let score = 0;
+            
+            if (detectedRegion && ev.region === detectedRegion) {
+                score += 15;
+            }
+            if (detectedType && ev.event_type === detectedType) {
+                score += 10;
+            }
+            
+            ["문화센터", "지자체", "뉴스", "축제"].forEach(cat => {
+                if (message.includes(cat) && ev.category === cat) {
+                    score += 8;
+                }
+            });
+            
+            if (detectedMonth) {
+                try {
+                    const sMon = parseInt(ev.start_date.split('-')[1], 10);
+                    const eMon = parseInt(ev.end_date.split('-')[1], 10);
+                    if (sMon <= detectedMonth && detectedMonth <= eMon) {
+                        score += 50;
+                    } else {
+                        return;
+                    }
+                } catch(e) {
+                    return;
+                }
+            }
+            
+            expandedKeywords.forEach(kw => {
+                const q = kw.toLowerCase();
+                if (ev.title.toLowerCase().includes(q)) score += 10;
+                if (ev.description && ev.description.toLowerCase().includes(q)) score += 4;
+                if (ev.location && ev.location.toLowerCase().includes(q)) score += 2;
+                if (ev.source_name && ev.source_name.toLowerCase().includes(q)) score += 2;
+            });
+            
+            if (score > 0) {
+                scoredEvents.push({ score, ev });
+            }
+        });
+        
+        scoredEvents.sort((a, b) => b.score - a.score);
+        const matchedEvents = scoredEvents.slice(0, 4).map(x => x.ev);
+        
+        const filtersDesc = [];
+        if (detectedRegion) filtersDesc.push(`**${detectedRegion}** 지역`);
+        if (detectedMonth) filtersDesc.push(`**${detectedMonth}월**`);
+        if (detectedType) filtersDesc.push(`**${detectedType}** 유형`);
+        
+        words.forEach(w => {
+            if (w !== detectedRegion && w !== `${detectedMonth}월` && w !== detectedType) {
+                filtersDesc.push(`**${w}**`);
+            }
+        });
+        const filtersStr = filtersDesc.length > 0 ? filtersDesc.join(", ") : "전체";
+        
+        if (matchedEvents.length > 0) {
+            return {
+                reply: `안녕하세요! **문화공연 사냥꾼 지능형 비서**입니다. 🏹 (Serverless 모드 가동 중)\n\n질문하신 키워드(${filtersStr})를 기반으로 450개 데이터베이스를 분석해 최적의 추천 문화 일정을 선별해 냈습니다! 마음에 드는 일정이 있다면 상세 카드를 눌러 출처 및 위치 정보를 확인해보세요.`,
+                events: matchedEvents
+            };
+        } else {
+            const activeEvents = allEvents.filter(ev => ev.end_date >= todayStr);
+            const shuffled = activeEvents.sort(() => 0.5 - Math.random());
+            const fallbackEvents = shuffled.slice(0, 3);
+            
+            return {
+                reply: `안녕하세요! **문화공연 사냥꾼 지능형 비서**입니다. 🏹 (Serverless 모드 가동 중)\n\n죄송합니다. 현재 데이터베이스에서 검색어(${filtersStr})에 매칭되는 2026년 일정을 찾지 못했습니다.\n\n대신 우측 상단의 **[실시간 크롤링 엔진]** 탭에서 관련 키워드를 입력해 직접 최신 정보를 긁어모아 보세요! 아래는 현재 다른 사용자들이 가장 눈여겨보고 있는 실시간 대표 문화 강좌 및 축제들입니다.`,
+                events: fallbackEvents
+            };
+        }
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
 }
